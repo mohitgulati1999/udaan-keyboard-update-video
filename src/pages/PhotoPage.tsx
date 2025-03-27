@@ -80,7 +80,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
               canvas.width = video.videoHeight;
               canvas.height = video.videoWidth;
               context.translate(canvas.width, 0);
-              context.rotate(90 * Math.PI);
+              context.rotate(90 * Math.PI/180);
             } else {
               canvas.width = video.videoWidth;
               canvas.height = video.videoHeight;
@@ -123,7 +123,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
                         maxWidth: '100%',
                         maxHeight: '70vh',
                         objectFit: 'cover',
-                        transform: 'scaleX(1) rotate(90deg)',
+                        transform: 'scaleX(1) rotate(-90deg)',
                         transformOrigin: 'center',
                       }}
                     />
