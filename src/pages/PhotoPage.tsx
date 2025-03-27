@@ -80,7 +80,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
               canvas.width = video.videoHeight;
               canvas.height = video.videoWidth;
               context.translate(canvas.width, 0);
-              context.rotate(-90 * Math.PI / 180);
+              context.rotate(90 * Math.PI);
             } else {
               canvas.width = video.videoWidth;
               canvas.height = video.videoHeight;
