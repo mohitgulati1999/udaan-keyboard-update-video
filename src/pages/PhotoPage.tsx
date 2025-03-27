@@ -71,7 +71,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
               const base64String = localStorage.getItem("image"); // Your Base64 data
               const filename = "my-image.png"; // Name to save
           
-              const response = await fetch("http://localhost:5000/upload", {
+              const response = await fetch("https://selfiekiosk-1.onrender.com/upload", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ image: base64String, filename }),
