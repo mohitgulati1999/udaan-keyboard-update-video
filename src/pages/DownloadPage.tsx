@@ -6,7 +6,7 @@ import React, { useEffect } from 'react';
       const { id } = useParams<{ id: string }>();
 
       // Retrieve the photo data *once* and keep it.
-      const photoData = id ? getPhoto(id) : undefined;
+      const photoData = localStorage.getItem("image");
 
       useEffect(() => {
         // No longer deleting here in useEffect
