@@ -30,41 +30,46 @@ const FormPage = () => {
   const keyboardContainerRef = useRef<HTMLDivElement>(null);
   const inputRefs = useRef<{[key: string]: HTMLInputElement | null}>({});
 
-  // Set up input refs
   const registerInputRef = (name: string) => (element: HTMLInputElement | null) => {
     inputRefs.current[name] = element;
   };
 
-  // Form submission handler
   const onSubmit = (data: FormData) => {
     localStorage.setItem("userInfo", JSON.stringify(data));
     navigate("/photo");
   };
 
-  // Keyboard input handlers
   const handleKeyPress = (key: string) => {
     if (focusedInput) {
-      setValue(focusedInput as keyof FormData, (getValues(focusedInput) || '') + key, { 
+      const currentValue = getValues(focusedInput as keyof FormData) || '';
+      setValue(focusedInput as keyof FormData, currentValue + key, { 
         shouldDirty: true, 
         shouldValidate: true 
       });
+      // Update the input value directly
+      if (inputRefs.current[focusedInput]) {
+        inputRefs.current[focusedInput]!.value = currentValue + key;
+      }
     }
   };
 
   const handleBackspace = () => {
     if (focusedInput) {
-      setValue(focusedInput as keyof FormData, (getValues(focusedInput) || '').slice(0, -1), { 
+      const currentValue = getValues(focusedInput as keyof FormData) || '';
+      const newValue = currentValue.slice(0, -1);
+      setValue(focusedInput as keyof FormData, newValue, { 
         shouldDirty: true, 
         shouldValidate: true 
       });
+      if (inputRefs.current[focusedInput]) {
+        inputRefs.current[focusedInput]!.value = newValue;
+      }
     }
   };
 
-  // Focus and touch handlers
   const handleFocus = (inputName: string) => {
     setFocusedInput(inputName);
     setKeyboardVisible(true);
-    // Position keyboard above the input field
     const inputElement = inputRefs.current[inputName];
     if (inputElement && keyboardContainerRef.current) {
       const inputRect = inputElement.getBoundingClientRect();
@@ -77,7 +82,11 @@ const FormPage = () => {
     }
   };
 
-  // Touch handler for mobile devices
+  // Prevent default keyboard from appearing
+  const preventDefaultKeyboard = (e: React.KeyboardEvent | React.TouchEvent) => {
+    e.preventDefault();
+  };
+
   const handleInputTouch = (inputName: string) => (e: React.TouchEvent) => {
     e.preventDefault();
     const input = inputRefs.current[inputName];
@@ -87,7 +96,6 @@ const FormPage = () => {
     }
   };
 
-  // Handle blur (when input loses focus)
   const handleBlur = (e: React.FocusEvent) => {
     const relatedTarget = e.relatedTarget as Node;
     if (relatedTarget instanceof HTMLElement && 
@@ -99,7 +107,6 @@ const FormPage = () => {
     setFocusedInput(null);
   };
 
-  // Drag handlers for keyboard
   const handleDragStart = (clientX: number, clientY: number) => {
     if (keyboardContainerRef.current) {
       setDragOffset({
@@ -129,7 +136,6 @@ const FormPage = () => {
     }
   };
 
-  // Set up drag event listeners
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => handleDragMove(e.clientX, e.clientY);
     const handleTouchMove = (e: TouchEvent) => {
@@ -158,7 +164,6 @@ const FormPage = () => {
     setIsDragging(false);
   };
 
-  // Add touch event listeners for inputs
   useEffect(() => {
     const options = { passive: false };
     const inputs = formRef.current?.querySelectorAll('input');
@@ -174,11 +179,14 @@ const FormPage = () => {
 
     inputs?.forEach(input => {
       input.addEventListener('touchstart', handleInputTouch, options);
+      // Prevent default keyboard
+      input.addEventListener('keydown', (e) => e.preventDefault());
     });
 
     return () => {
       inputs?.forEach(input => {
         input.removeEventListener('touchstart', handleInputTouch);
+        input.removeEventListener('keydown', (e) => e.preventDefault());
       });
     };
   }, []);
@@ -204,6 +212,9 @@ const FormPage = () => {
               className="w-full px-6 py-4 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500 text-2xl"
               onFocus={() => handleFocus('name')}
               onBlur={handleBlur}
+              onTouchStart={handleInputTouch('name')}
+              onKeyDown={preventDefaultKeyboard}
+              readOnly // Prevents native keyboard
               autoComplete="off"
             />
             {errors.name && (
@@ -237,6 +248,9 @@ const FormPage = () => {
               className="w-full px-6 py-4 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500 text-2xl"
               onFocus={() => handleFocus('phone')}
               onBlur={handleBlur}
+              onTouchStart={handleInputTouch('phone')}
+              onKeyDown={preventDefaultKeyboard}
+              readOnly // Prevents native keyboard
               autoComplete="off"
             />
             {errors.phone && (
@@ -261,6 +275,9 @@ const FormPage = () => {
               className="w-full px-6 py-4 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500 text-2xl"
               onFocus={() => handleFocus('email')}
               onBlur={handleBlur}
+              onTouchStart={handleInputTouch('email')}
+              onKeyDown={preventDefaultKeyboard}
+              readOnly // Prevents native keyboard
               autoComplete="off"
             />
             {errors.email && (
