@@ -67,6 +67,20 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
         }, 1000);
       };
 
+      const uploadImage = async () => {
+              const base64String = localStorage.getItem("image"); // Your Base64 data
+              const filename = "my-image.png"; // Name to save
+          
+              const response = await fetch("http://localhost:5000/upload", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ image: base64String, filename }),
+              });
+          
+              const data = await response.json();
+              console.log("Image URL:", data.imageUrl); // Accessible image URL
+          };
+
       const capture = useCallback(() => {
         if (canvasRef.current && videoRef.current) {
           const video = videoRef.current;
@@ -91,7 +105,9 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 
             // Generate unique ID and store in memory
             const id = uuidv4();
-            localStorage.setItem("image",(imageSrc)); // Use the setPhoto function
+            localStorage.setItem("image",(imageSrc));
+            uploadImage()
+            setPhoto(id, imageSrc); // Use the setPhoto function
             setPhotoId(id);
           }
         }
@@ -109,6 +125,23 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
             <Link to="/" className="flex items-center justify-center gap-2 py-8">
               <img src="/images/logo.png" className='w-auto h-auto' alt="Logo" />
             </Link>
+
+            {/* New Look into the Camera Text */}
+        {/* <div className="text-center mb-4">
+          
+            {!photoId ? (
+              <p className="text-amber-300 text-3xl font-semibold animate-pulse">
+              Look into the Camera and Smile!
+              </p>
+            ):
+            (
+              <p className="text-amber-300 text-3xl font-semibold animate-pulse">
+              Scan Qr download image
+              </p>
+            )
+          }
+         
+        </div> */}
 
             <div className="bg-black bg-opacity-70 backdrop-blur-lg rounded-xl p-8 shadow-xl max-w-3xl w-full">
               {!photoId ? (
@@ -160,7 +193,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
                       style={{
                         maxHeight: '40vh', // Adjust as needed
                         objectFit: 'contain',
-                        transform: ' rotate(180deg)',
+                        transform: ' rotate(90deg)',
                         width: 'auto',
                         height: '100%',
                       }}
