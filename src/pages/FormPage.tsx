@@ -19,175 +19,174 @@ const FormPage = () => {
     formState: { errors },
   } = useForm<FormData>();
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
-  const [keyboardPosition, setKeyboardPosition] = useState<{ x: number; y: number }>({
-    x: window.innerWidth / 2 - 200,
-    y: window.innerHeight - 300,
+  const [keyboardPosition, setKeyboardPosition] = useState({ 
+    x: window.innerWidth / 2 - 200, 
+    y: window.innerHeight - 300 
   });
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const formRef = useRef<HTMLFormElement>(null);
   const keyboardContainerRef = useRef<HTMLDivElement>(null);
-  const inputRefs = {
-    name: useRef<HTMLInputElement>(null),
-    phone: useRef<HTMLInputElement>(null),
-    email: useRef<HTMLInputElement>(null),
+  const inputRefs = useRef<{[key: string]: HTMLInputElement | null}>({});
+
+  // Set up input refs
+  const registerInputRef = (name: string) => (element: HTMLInputElement | null) => {
+    inputRefs.current[name] = element;
   };
 
-  useEffect(() => {
-    let inactivityTimer: NodeJS.Timeout;
-
-    const resetTimer = () => {
-      if (inactivityTimer) clearTimeout(inactivityTimer);
-      inactivityTimer = setTimeout(() => {
-        navigate("/");
-      }, 60000);
-    };
-
-    const events = ["mousedown", "mousemove", "keypress", "scroll", "touchstart"];
-    resetTimer();
-    events.forEach((event) => document.addEventListener(event, resetTimer));
-
-    return () => {
-      if (inactivityTimer) clearTimeout(inactivityTimer);
-      events.forEach((event) => document.removeEventListener(event, resetTimer));
-    };
-  }, [navigate]);
-
+  // Form submission handler
   const onSubmit = (data: FormData) => {
     localStorage.setItem("userInfo", JSON.stringify(data));
     navigate("/photo");
   };
 
+  // Keyboard input handlers
   const handleKeyPress = (key: string) => {
     if (focusedInput) {
-      setValue(focusedInput as keyof FormData, (getValues(focusedInput) || "") + key, {
-        shouldDirty: true,
-        shouldValidate: true,
+      setValue(focusedInput as keyof FormData, (getValues(focusedInput) || '') + key, { 
+        shouldDirty: true, 
+        shouldValidate: true 
       });
     }
   };
 
   const handleBackspace = () => {
     if (focusedInput) {
-      setValue(focusedInput as keyof FormData, (getValues(focusedInput) || "").slice(0, -1), {
-        shouldDirty: true,
-        shouldValidate: true,
+      setValue(focusedInput as keyof FormData, (getValues(focusedInput) || '').slice(0, -1), { 
+        shouldDirty: true, 
+        shouldValidate: true 
       });
     }
   };
 
+  // Focus and touch handlers
   const handleFocus = (inputName: string) => {
     setFocusedInput(inputName);
     setKeyboardVisible(true);
-    // Ensure the input is focused on touch devices
-    const inputRef = inputRefs[inputName as keyof typeof inputRefs].current;
-    if (inputRef && document.activeElement !== inputRef) {
-      inputRef.focus();
+    // Position keyboard above the input field
+    const inputElement = inputRefs.current[inputName];
+    if (inputElement && keyboardContainerRef.current) {
+      const inputRect = inputElement.getBoundingClientRect();
+      const keyboardHeight = keyboardContainerRef.current.offsetHeight;
+      
+      setKeyboardPosition({
+        x: window.innerWidth / 2 - keyboardContainerRef.current.offsetWidth / 2,
+        y: Math.min(inputRect.top - keyboardHeight - 10, window.innerHeight - keyboardHeight - 20)
+      });
     }
   };
 
+  // Touch handler for mobile devices
+  const handleInputTouch = (inputName: string) => (e: React.TouchEvent) => {
+    e.preventDefault();
+    const input = inputRefs.current[inputName];
+    if (input) {
+      input.focus();
+      handleFocus(inputName);
+    }
+  };
+
+  // Handle blur (when input loses focus)
   const handleBlur = (e: React.FocusEvent) => {
     const relatedTarget = e.relatedTarget as Node;
-    if (
-      relatedTarget instanceof HTMLElement &&
-      (keyboardContainerRef.current?.contains(relatedTarget) || relatedTarget.tagName === "INPUT")
-    ) {
+    if (relatedTarget instanceof HTMLElement && 
+        (keyboardContainerRef.current?.contains(relatedTarget) ||
+         relatedTarget.tagName === 'INPUT')) {
       return;
     }
     setKeyboardVisible(false);
-    if (!keyboardContainerRef.current?.contains(relatedTarget)) {
-      setFocusedInput(null);
-    }
+    setFocusedInput(null);
   };
 
-  const handleDragStart = (clientX: number, clientY: number, e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
+  // Drag handlers for keyboard
+  const handleDragStart = (clientX: number, clientY: number) => {
     if (keyboardContainerRef.current) {
-      const rect = keyboardContainerRef.current.getBoundingClientRect();
       setDragOffset({
         x: clientX - keyboardPosition.x,
-        y: clientY - keyboardPosition.y,
+        y: clientY - keyboardPosition.y
       });
       setIsDragging(true);
-      setKeyboardVisible(true);
     }
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    handleDragStart(e.clientX, e.clientY, e);
+    handleDragStart(e.clientX, e.clientY);
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    e.preventDefault();
     const touch = e.touches[0];
-    handleDragStart(touch.clientX, touch.clientY, e);
+    handleDragStart(touch.clientX, touch.clientY);
   };
 
   const handleDragMove = (clientX: number, clientY: number) => {
-    if (isDragging && keyboardContainerRef.current) {
-      const rect = keyboardContainerRef.current.getBoundingClientRect();
-      const newX = clientX - dragOffset.x;
-      const newY = clientY - dragOffset.y;
-
-      const screenWidth = window.innerWidth;
-      const screenHeight = window.innerHeight;
-      const keyboardWidth = rect.width;
-      const keyboardHeight = rect.height;
-
-      const constrainedX = Math.max(0, Math.min(newX, screenWidth - keyboardWidth));
-      const constrainedY = Math.max(0, Math.min(newY, screenHeight - keyboardHeight));
-
+    if (isDragging) {
       setKeyboardPosition({
-        x: constrainedX,
-        y: constrainedY,
+        x: clientX - dragOffset.x,
+        y: clientY - dragOffset.y
       });
     }
   };
 
-  const handleMouseMove = (e: MouseEvent) => {
-    e.preventDefault();
-    handleDragMove(e.clientX, e.clientY);
-  };
+  // Set up drag event listeners
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => handleDragMove(e.clientX, e.clientY);
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isDragging) return;
+      e.preventDefault();
+      const touch = e.touches[0];
+      handleDragMove(touch.clientX, touch.clientY);
+    };
 
-  const handleTouchMove = (e: TouchEvent) => {
-    e.preventDefault();
-    const touch = e.touches[0];
-    handleDragMove(touch.clientX, touch.clientY);
-  };
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('touchmove', handleTouchMove, { passive: false });
+      window.addEventListener('mouseup', handleDragEnd);
+      window.addEventListener('touchend', handleDragEnd);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('mouseup', handleDragEnd);
+      window.removeEventListener('touchend', handleDragEnd);
+    };
+  }, [isDragging, dragOffset]);
 
   const handleDragEnd = () => {
     setIsDragging(false);
   };
 
-  const handleMouseUp = (e: MouseEvent) => {
-    handleDragEnd();
-  };
-
-  const handleTouchEnd = (e: TouchEvent) => {
-    handleDragEnd();
-  };
-
+  // Add touch event listeners for inputs
   useEffect(() => {
-    if (isDragging) {
-      window.addEventListener("mousemove", handleMouseMove);
-      window.addEventListener("mouseup", handleMouseUp);
-      window.addEventListener("touchmove", handleTouchMove, { passive: false });
-      window.addEventListener("touchend", handleTouchEnd, { passive: false });
-    }
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-      window.removeEventListener("touchmove", handleTouchMove);
-      window.removeEventListener("touchend", handleTouchEnd);
+    const options = { passive: false };
+    const inputs = formRef.current?.querySelectorAll('input');
+    const handleInputTouch = (e: TouchEvent) => {
+      e.preventDefault();
+      const target = e.target as HTMLInputElement;
+      const inputName = target.name as keyof FormData;
+      if (inputName && inputRefs.current[inputName]) {
+        inputRefs.current[inputName]?.focus();
+        handleFocus(inputName);
+      }
     };
-  }, [isDragging, dragOffset]);
+
+    inputs?.forEach(input => {
+      input.addEventListener('touchstart', handleInputTouch, options);
+    });
+
+    return () => {
+      inputs?.forEach(input => {
+        input.removeEventListener('touchstart', handleInputTouch);
+      });
+    };
+  }, []);
 
   return (
-    <div
-      className="min-h-screen flex flex-col justify-center items-center bg-cover bg-center"
-      style={{ backgroundImage: `url('/images/background.jpg')` }}
-    >
-      <div className="relative z-10 w-full max-w-2xl p-6 bg-opacity-70 backdrop-blur-lg rounded-xl shadow-xl">
+    <div className="min-h-screen flex flex-col justify-center items-center bg-cover bg-center"
+      style={{ backgroundImage: `url('/images/background.jpg')` }}>
+      <div className="relative z-10 w-full max-w-2xl p-6 bg-gray-900 bg-opacity-70 backdrop-blur-lg rounded-xl shadow-xl">
         <Link to="/" className="flex items-center justify-center gap-2 py-8">
           <img src="/images/logo.png" alt="Logo" className="w-auto h-auto" />
         </Link>
@@ -199,17 +198,13 @@ const FormPage = () => {
           <div>
             <input
               {...register("name", { required: "Name is required" })}
-              ref={inputRefs.name}
+              name="name"
+              ref={registerInputRef("name")}
               placeholder="Full Name"
               className="w-full px-6 py-4 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500 text-2xl"
-              onFocus={() => handleFocus("name")}
+              onFocus={() => handleFocus('name')}
               onBlur={handleBlur}
-              onTouchStart={(e) => {
-                e.preventDefault(); // Prevent native keyboard on mobile
-                handleFocus("name");
-              }}
               autoComplete="off"
-              inputMode="none"
             />
             {errors.name && (
               <p className="mt-1 text-red-400 text-lg">{errors.name.message}</p>
@@ -223,28 +218,31 @@ const FormPage = () => {
                 validate: {
                   validLength: (value) => {
                     const digitsOnly = value.replace(/\D/g, "");
-                    return digitsOnly.length === 10 || "Phone number must be 10 digits";
+                    return (
+                      digitsOnly.length === 10 ||
+                      "Phone number must be 10 digits"
+                    );
                   },
                   validFormat: (value) => {
                     const cleaned = value.replace(/\D/g, "");
-                    return /^\d{10}$/.test(cleaned) || "Invalid phone number format";
+                    return (
+                      /^\d{10}$/.test(cleaned) || "Invalid phone number format"
+                    );
                   },
                 },
               })}
-              ref={inputRefs.phone}
+              name="phone"
+              ref={registerInputRef("phone")}
               placeholder="Phone Number"
               className="w-full px-6 py-4 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500 text-2xl"
-              onFocus={() => handleFocus("phone")}
+              onFocus={() => handleFocus('phone')}
               onBlur={handleBlur}
-              onTouchStart={(e) => {
-                e.preventDefault(); // Prevent native keyboard on mobile
-                handleFocus("phone");
-              }}
               autoComplete="off"
-              inputMode="numeric"
             />
             {errors.phone && (
-              <p className="mt-1 text-red-400 text-lg">{errors.phone.message}</p>
+              <p className="mt-1 text-red-400 text-lg">
+                {errors.phone.message}
+              </p>
             )}
           </div>
 
@@ -257,20 +255,18 @@ const FormPage = () => {
                   message: "Invalid email address",
                 },
               })}
-              ref={inputRefs.email}
+              name="email"
+              ref={registerInputRef("email")}
               placeholder="Email Address"
               className="w-full px-6 py-4 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500 text-2xl"
-              onFocus={() => handleFocus("email")}
+              onFocus={() => handleFocus('email')}
               onBlur={handleBlur}
-              onTouchStart={(e) => {
-                e.preventDefault(); // Prevent native keyboard on mobile
-                handleFocus("email");
-              }}
               autoComplete="off"
-              inputMode="email"
             />
             {errors.email && (
-              <p className="mt-1 text-red-400 text-lg">{errors.email.message}</p>
+              <p className="mt-1 text-red-400 text-lg">
+                {errors.email.message}
+              </p>
             )}
           </div>
 
@@ -286,27 +282,25 @@ const FormPage = () => {
           <div
             ref={keyboardContainerRef}
             style={{
-              position: "fixed",
+              position: 'fixed',
               left: `${keyboardPosition.x}px`,
               top: `${keyboardPosition.y}px`,
               zIndex: 1000,
-              touchAction: "none",
+              touchAction: 'none',
             }}
           >
-            <div
+            <div 
               className="bg-gray-800 p-2 rounded-t-lg text-white text-center cursor-move"
               onMouseDown={handleMouseDown}
               onTouchStart={handleTouchStart}
-              style={{
-                userSelect: "none",
-                WebkitUserSelect: "none",
-                MozUserSelect: "none",
-                msUserSelect: "none",
-              }}
+              style={{ userSelect: 'none' }}
             >
               Drag Keyboard
             </div>
-            <VirtualKeyboard onKeyPress={handleKeyPress} onBackspace={handleBackspace} />
+            <VirtualKeyboard
+              onKeyPress={handleKeyPress}
+              onBackspace={handleBackspace}
+            />
           </div>
         )}
       </div>
