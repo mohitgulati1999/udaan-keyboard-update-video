@@ -9,7 +9,7 @@ const DownloadPage = () => {
   // Fetch image and store in localStorage
   const fetchPhoto = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/image/my-image.png`, {
+      const response = await axios.get(`https://selfiekiosk-1.onrender.com/image/my-image.png`, {
           responseType: "text", // Get the raw Base64 string as text
       });
   
