@@ -79,7 +79,6 @@ const FormPage = () => {
 
   const handleBlur = (e: React.FocusEvent) => {
     const relatedTarget = e.relatedTarget as Node;
-    // Don't hide keyboard if clicking on keyboard or moving to another input
     if (
       relatedTarget instanceof HTMLElement && 
       (keyboardContainerRef.current?.contains(relatedTarget) ||
@@ -88,31 +87,38 @@ const FormPage = () => {
       return;
     }
     setKeyboardVisible(false);
-    // Only clear focusedInput if not clicking on keyboard
     if (!keyboardContainerRef.current?.contains(relatedTarget)) {
       setFocusedInput(null);
     }
   };
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent losing focus
+  const handleDragStart = (clientX: number, clientY: number, e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault(); // Prevent default behavior for both mouse and touch
     if (keyboardContainerRef.current) {
       const rect = keyboardContainerRef.current.getBoundingClientRect();
       setDragOffset({
-        x: e.clientX - keyboardPosition.x,
-        y: e.clientY - keyboardPosition.y
+        x: clientX - keyboardPosition.x,
+        y: clientY - keyboardPosition.y
       });
       setIsDragging(true);
-      // Ensure keyboard stays visible when starting drag
       setKeyboardVisible(true);
     }
   };
 
-  const handleMouseMove = (e: MouseEvent) => {
+  const handleMouseDown = (e: React.MouseEvent) => {
+    handleDragStart(e.clientX, e.clientY, e);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    handleDragStart(touch.clientX, touch.clientY, e);
+  };
+
+  const handleDragMove = (clientX: number, clientY: number) => {
     if (isDragging && keyboardContainerRef.current) {
       const rect = keyboardContainerRef.current.getBoundingClientRect();
-      const newX = e.clientX - dragOffset.x;
-      const newY = e.clientY - dragOffset.y;
+      const newX = clientX - dragOffset.x;
+      const newY = clientY - dragOffset.y;
 
       const screenWidth = window.innerWidth;
       const screenHeight = window.innerHeight;
@@ -129,18 +135,41 @@ const FormPage = () => {
     }
   };
 
-  const handleMouseUp = () => {
+  const handleMouseMove = (e: MouseEvent) => {
+    e.preventDefault(); // Prevent text selection while dragging
+    handleDragMove(e.clientX, e.clientY);
+  };
+
+  const handleTouchMove = (e: TouchEvent) => {
+    e.preventDefault(); // Prevent scrolling while dragging
+    const touch = e.touches[0];
+    handleDragMove(touch.clientX, touch.clientY);
+  };
+
+  const handleDragEnd = () => {
     setIsDragging(false);
+  };
+
+  const handleMouseUp = (e: MouseEvent) => {
+    handleDragEnd();
+  };
+
+  const handleTouchEnd = (e: TouchEvent) => {
+    handleDragEnd();
   };
 
   useEffect(() => {
     if (isDragging) {
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener('touchmove', handleTouchMove, { passive: false });
+      window.addEventListener('touchend', handleTouchEnd, { passive: false });
     }
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
     };
   }, [isDragging, dragOffset]);
 
@@ -165,6 +194,7 @@ const FormPage = () => {
               className="w-full px-6 py-4 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500 text-2xl"
               onFocus={() => handleFocus('name')}
               onBlur={handleBlur}
+              onTouchStart={() => handleFocus('name')} // Added for touch devices
               autoComplete="off"
               inputMode="none"
             />
@@ -197,6 +227,7 @@ const FormPage = () => {
               className="w-full px-6 py-4 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500 text-2xl"
               onFocus={() => handleFocus('phone')}
               onBlur={handleBlur}
+              onTouchStart={() => handleFocus('phone')} // Added for touch devices
               autoComplete="off"
               inputMode="numeric"
             />
@@ -220,6 +251,7 @@ const FormPage = () => {
               className="w-full px-6 py-4 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500 text-2xl"
               onFocus={() => handleFocus('email')}
               onBlur={handleBlur}
+              onTouchStart={() => handleFocus('email')} // Added for touch devices
               autoComplete="off"
               inputMode="email"
             />
@@ -246,11 +278,13 @@ const FormPage = () => {
               left: `${keyboardPosition.x}px`,
               top: `${keyboardPosition.y}px`,
               zIndex: 1000,
+              touchAction: 'none',
             }}
           >
             <div 
               className="bg-gray-800 p-2 rounded-t-lg text-white text-center cursor-move"
               onMouseDown={handleMouseDown}
+              onTouchStart={handleTouchStart}
               style={{ 
                 userSelect: 'none',
                 WebkitUserSelect: 'none',
@@ -271,4 +305,4 @@ const FormPage = () => {
   );
 };
 
-export default FormPage;
+export default FormPage; 
