@@ -91,7 +91,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 
             // Generate unique ID and store in memory
             const id = uuidv4();
-            setPhoto(id, imageSrc); // Use the setPhoto function
+            localStorage.setItem("image",(imageSrc)); // Use the setPhoto function
             setPhotoId(id);
           }
         }
