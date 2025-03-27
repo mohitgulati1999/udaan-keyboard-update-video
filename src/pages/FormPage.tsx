@@ -19,15 +19,20 @@ const FormPage = () => {
     formState: { errors },
   } = useForm<FormData>();
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
-  const [keyboardPosition, setKeyboardPosition] = useState<{ x: number; y: number }>({ 
-    x: window.innerWidth / 2 - 200, 
-    y: window.innerHeight - 300 
+  const [keyboardPosition, setKeyboardPosition] = useState<{ x: number; y: number }>({
+    x: window.innerWidth / 2 - 200,
+    y: window.innerHeight - 300,
   });
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const formRef = useRef<HTMLFormElement>(null);
   const keyboardContainerRef = useRef<HTMLDivElement>(null);
+  const inputRefs = {
+    name: useRef<HTMLInputElement>(null),
+    phone: useRef<HTMLInputElement>(null),
+    email: useRef<HTMLInputElement>(null),
+  };
 
   useEffect(() => {
     let inactivityTimer: NodeJS.Timeout;
@@ -56,18 +61,18 @@ const FormPage = () => {
 
   const handleKeyPress = (key: string) => {
     if (focusedInput) {
-      setValue(focusedInput as keyof FormData, (getValues(focusedInput) || '') + key, { 
-        shouldDirty: true, 
-        shouldValidate: true 
+      setValue(focusedInput as keyof FormData, (getValues(focusedInput) || "") + key, {
+        shouldDirty: true,
+        shouldValidate: true,
       });
     }
   };
 
   const handleBackspace = () => {
     if (focusedInput) {
-      setValue(focusedInput as keyof FormData, (getValues(focusedInput) || '').slice(0, -1), { 
-        shouldDirty: true, 
-        shouldValidate: true 
+      setValue(focusedInput as keyof FormData, (getValues(focusedInput) || "").slice(0, -1), {
+        shouldDirty: true,
+        shouldValidate: true,
       });
     }
   };
@@ -75,14 +80,18 @@ const FormPage = () => {
   const handleFocus = (inputName: string) => {
     setFocusedInput(inputName);
     setKeyboardVisible(true);
+    // Ensure the input is focused on touch devices
+    const inputRef = inputRefs[inputName as keyof typeof inputRefs].current;
+    if (inputRef && document.activeElement !== inputRef) {
+      inputRef.focus();
+    }
   };
 
   const handleBlur = (e: React.FocusEvent) => {
     const relatedTarget = e.relatedTarget as Node;
     if (
-      relatedTarget instanceof HTMLElement && 
-      (keyboardContainerRef.current?.contains(relatedTarget) ||
-       relatedTarget.tagName === 'INPUT')
+      relatedTarget instanceof HTMLElement &&
+      (keyboardContainerRef.current?.contains(relatedTarget) || relatedTarget.tagName === "INPUT")
     ) {
       return;
     }
@@ -93,12 +102,12 @@ const FormPage = () => {
   };
 
   const handleDragStart = (clientX: number, clientY: number, e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault(); // Prevent default behavior for both mouse and touch
+    e.preventDefault();
     if (keyboardContainerRef.current) {
       const rect = keyboardContainerRef.current.getBoundingClientRect();
       setDragOffset({
         x: clientX - keyboardPosition.x,
-        y: clientY - keyboardPosition.y
+        y: clientY - keyboardPosition.y,
       });
       setIsDragging(true);
       setKeyboardVisible(true);
@@ -130,18 +139,18 @@ const FormPage = () => {
 
       setKeyboardPosition({
         x: constrainedX,
-        y: constrainedY
+        y: constrainedY,
       });
     }
   };
 
   const handleMouseMove = (e: MouseEvent) => {
-    e.preventDefault(); // Prevent text selection while dragging
+    e.preventDefault();
     handleDragMove(e.clientX, e.clientY);
   };
 
   const handleTouchMove = (e: TouchEvent) => {
-    e.preventDefault(); // Prevent scrolling while dragging
+    e.preventDefault();
     const touch = e.touches[0];
     handleDragMove(touch.clientX, touch.clientY);
   };
@@ -160,16 +169,16 @@ const FormPage = () => {
 
   useEffect(() => {
     if (isDragging) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-      window.addEventListener('touchmove', handleTouchMove, { passive: false });
-      window.addEventListener('touchend', handleTouchEnd, { passive: false });
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
+      window.addEventListener("touchmove", handleTouchMove, { passive: false });
+      window.addEventListener("touchend", handleTouchEnd, { passive: false });
     }
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-      window.removeEventListener('touchmove', handleTouchMove);
-      window.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
     };
   }, [isDragging, dragOffset]);
 
@@ -190,11 +199,15 @@ const FormPage = () => {
           <div>
             <input
               {...register("name", { required: "Name is required" })}
+              ref={inputRefs.name}
               placeholder="Full Name"
               className="w-full px-6 py-4 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500 text-2xl"
-              onFocus={() => handleFocus('name')}
+              onFocus={() => handleFocus("name")}
               onBlur={handleBlur}
-              onTouchStart={() => handleFocus('name')} // Added for touch devices
+              onTouchStart={(e) => {
+                e.preventDefault(); // Prevent native keyboard on mobile
+                handleFocus("name");
+              }}
               autoComplete="off"
               inputMode="none"
             />
@@ -210,31 +223,28 @@ const FormPage = () => {
                 validate: {
                   validLength: (value) => {
                     const digitsOnly = value.replace(/\D/g, "");
-                    return (
-                      digitsOnly.length === 10 ||
-                      "Phone number must be 10 digits"
-                    );
+                    return digitsOnly.length === 10 || "Phone number must be 10 digits";
                   },
                   validFormat: (value) => {
                     const cleaned = value.replace(/\D/g, "");
-                    return (
-                      /^\d{10}$/.test(cleaned) || "Invalid phone number format"
-                    );
+                    return /^\d{10}$/.test(cleaned) || "Invalid phone number format";
                   },
                 },
               })}
+              ref={inputRefs.phone}
               placeholder="Phone Number"
               className="w-full px-6 py-4 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500 text-2xl"
-              onFocus={() => handleFocus('phone')}
+              onFocus={() => handleFocus("phone")}
               onBlur={handleBlur}
-              onTouchStart={() => handleFocus('phone')} // Added for touch devices
+              onTouchStart={(e) => {
+                e.preventDefault(); // Prevent native keyboard on mobile
+                handleFocus("phone");
+              }}
               autoComplete="off"
               inputMode="numeric"
             />
             {errors.phone && (
-              <p className="mt-1 text-red-400 text-lg">
-                {errors.phone.message}
-              </p>
+              <p className="mt-1 text-red-400 text-lg">{errors.phone.message}</p>
             )}
           </div>
 
@@ -247,18 +257,20 @@ const FormPage = () => {
                   message: "Invalid email address",
                 },
               })}
+              ref={inputRefs.email}
               placeholder="Email Address"
               className="w-full px-6 py-4 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500 text-2xl"
-              onFocus={() => handleFocus('email')}
+              onFocus={() => handleFocus("email")}
               onBlur={handleBlur}
-              onTouchStart={() => handleFocus('email')} // Added for touch devices
+              onTouchStart={(e) => {
+                e.preventDefault(); // Prevent native keyboard on mobile
+                handleFocus("email");
+              }}
               autoComplete="off"
               inputMode="email"
             />
             {errors.email && (
-              <p className="mt-1 text-red-400 text-lg">
-                {errors.email.message}
-              </p>
+              <p className="mt-1 text-red-400 text-lg">{errors.email.message}</p>
             )}
           </div>
 
@@ -274,30 +286,27 @@ const FormPage = () => {
           <div
             ref={keyboardContainerRef}
             style={{
-              position: 'fixed',
+              position: "fixed",
               left: `${keyboardPosition.x}px`,
               top: `${keyboardPosition.y}px`,
               zIndex: 1000,
-              touchAction: 'none',
+              touchAction: "none",
             }}
           >
-            <div 
+            <div
               className="bg-gray-800 p-2 rounded-t-lg text-white text-center cursor-move"
               onMouseDown={handleMouseDown}
               onTouchStart={handleTouchStart}
-              style={{ 
-                userSelect: 'none',
-                WebkitUserSelect: 'none',
-                MozUserSelect: 'none',
-                msUserSelect: 'none'
+              style={{
+                userSelect: "none",
+                WebkitUserSelect: "none",
+                MozUserSelect: "none",
+                msUserSelect: "none",
               }}
             >
               Drag Keyboard
             </div>
-            <VirtualKeyboard
-              onKeyPress={handleKeyPress}
-              onBackspace={handleBackspace}
-            />
+            <VirtualKeyboard onKeyPress={handleKeyPress} onBackspace={handleBackspace} />
           </div>
         )}
       </div>
@@ -305,4 +314,4 @@ const FormPage = () => {
   );
 };
 
-export default FormPage; 
+export default FormPage;
