@@ -122,7 +122,7 @@ const PhotoPage = () => {
           <img src="/images/logo.png" className='w-auto h-auto' alt="Logo" />
         </Link>
 
-        <div className="bg-black bg-opacity-70 backdrop-blur-lg rounded-xl p-8 shadow-xl max-w-3xl w-full">
+        <div className="bg-black bg-opacity-0 backdrop-blur-lg rounded-xl p-8 shadow-xl max-w-3xl w-full">
           {!photoId ? (
             <div className="space-y-6 flex flex-col items-center justify-center">
               {/* Text above video frame */}
