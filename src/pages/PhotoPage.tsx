@@ -119,7 +119,7 @@ const PhotoPage = () => {
     >
       <div className="relative z-10 container mx-auto px-4 w-full h-full flex flex-col justify-center items-center">
         <Link to="/" className="flex items-center justify-center gap-2 py-8">
-          <img src="/images/logo.png" className='w-auto h-auto' alt="Logo" />
+          <img src="/images/logob.png" className='w-auto h-auto' alt="Logo" />
         </Link>
 
         <div className="bg-black bg-opacity-0 backdrop-blur-lg rounded-xl p-8 shadow-xl max-w-3xl w-full">
