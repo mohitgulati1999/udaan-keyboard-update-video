@@ -141,7 +141,7 @@ const PhotoPage = () => {
                     maxWidth: '100%',
                     maxHeight: '90vh',
                     objectFit: 'cover',
-                    transform: 'scaleX(1) rotate(90deg)',
+                    transform: 'scaleX(1) rotate(-90deg)',
                     transformOrigin: 'center',
                   }}
                 />
