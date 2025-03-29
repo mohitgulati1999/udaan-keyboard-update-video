@@ -177,7 +177,7 @@ const PhotoPage = () => {
                   style={{
                     maxHeight: '40vh',
                     objectFit: 'contain',
-                    transform: 'rotate(180deg)',
+                    transform: 'rotate(0deg)',
                     width: 'auto',
                     height: '100%',
                   }}
