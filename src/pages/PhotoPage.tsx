@@ -93,7 +93,7 @@ const PhotoPage = () => {
         if (isPortrait) {
           canvas.width = video.videoHeight;
           canvas.height = video.videoWidth;
-          context.translate(canvas.width, 0);
+          context.translate(canvas.width, 180);
           context.rotate(90 * Math.PI/180);
         } else {
           canvas.width = video.videoWidth;
