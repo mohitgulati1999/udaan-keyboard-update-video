@@ -139,9 +139,9 @@ const PhotoPage = () => {
                   className="w-full rounded-lg absolute"
                   style={{
                     maxWidth: '100%',
-                    maxHeight: '70vh',
+                    maxHeight: '90vh',
                     objectFit: 'cover',
-                    transform: 'scaleX(1) rotate(180deg)',
+                    transform: 'scaleX(1) rotate(90deg)',
                     transformOrigin: 'center',
                   }}
                 />
