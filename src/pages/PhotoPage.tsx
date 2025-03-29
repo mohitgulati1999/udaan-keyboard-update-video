@@ -54,7 +54,7 @@ const PhotoPage = () => {
   }, []);
 
   const startCountdown = () => {
-    setCountdown(5);
+    setCountdown(10);                               // Countdown
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev === 1) {
@@ -93,7 +93,7 @@ const PhotoPage = () => {
         if (isPortrait) {
           canvas.width = video.videoHeight;
           canvas.height = video.videoWidth;
-          context.translate(canvas.width, 180);
+          context.translate(canvas.width, 180);   //Camera video orientation
           context.rotate(90 * Math.PI/180);
         } else {
           canvas.width = video.videoWidth;
