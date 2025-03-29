@@ -168,8 +168,8 @@ const PhotoPage = () => {
               </div>
             </div>
           ) : (
-            <div className="space-y-6 flex flex-col items-center justify-center">
-              <div className="overflow-hidden rounded-lg shadow-xl border-4 border-amber-400 border-dashed">
+            <div className="w-full space-y-6 flex flex-col items-center justify-center">
+              <div className="w-full overflow-hidden rounded-lg shadow-xl border-4 border-amber-400 border-dashed">
                 <img
                   src={getPhoto(photoId)}
                   alt="Captured Thumbnail"
@@ -178,8 +178,8 @@ const PhotoPage = () => {
                     maxHeight: '40vh',
                     objectFit: 'contain',
                     transform: 'rotate(180deg)',
-                    width: 'auto',
-                    height: '100%',
+                    width: '100%',
+                    height: 'auto',
                   }}
                 />
               </div>
