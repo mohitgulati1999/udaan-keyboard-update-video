@@ -55,7 +55,7 @@ const DownloadPage = () => {
           src={photoData}
           alt="Downloaded Selfie"
           className="max-w-full max-h-80vh rounded-lg shadow-xl"
-          style={{ transform: "rotate(180deg)" }} // Rotate the image 180 degrees
+          style={{ transform: "rotate(0deg)" }} // Rotate the image 180 degrees
         />
         <a
           href={photoData}
