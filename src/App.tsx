@@ -13,8 +13,8 @@ import React from 'react';
             <Toaster position="top-center" />
             <Routes>
               <Route path="/" element={<HomePage />} />
-              <Route path="/form" element={<FormPage />} />
               <Route path="/photo" element={<PhotoPage />} />
+              <Route path="/form" element={<FormPage />} />
               <Route path="/download/:id" element={<DownloadPage />} />
             </Routes>
           </div>
